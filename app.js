@@ -10,7 +10,7 @@ app.use(bodyParser.urlencoded({ type: 'multipart/form-data' }));
 app.use(bodyParser.json({ type: 'application/json' }));
 
 
-var WORDS = listAssembler(require('./src/wordlist.js').filter((p,i) => (i % 3 === 0)));
+var WORDS = listAssembler(require('./src/wordlist.js').filter((p,i) => (i % 2 === 0)));
 var LISTS;
 try {
     var dir = './db';
@@ -43,6 +43,7 @@ app.post('/fetch', function (req, res) {
     res.send({
         baseList: LISTS.BASE,
         replaceList: LISTS.UPDATED,
+        changes: LISTS.CHANGES,
         initialize: Boolean(LISTS.RENDERED)
     })
 })
