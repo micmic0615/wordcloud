@@ -23,6 +23,7 @@ try {
         RENDERED: null,
         CHANGES: []
     }
+    fs.writeFileSync('db/lists.json', JSON.stringify(LISTS));
 }
 
 app.use(express.static('build'));
@@ -114,4 +115,5 @@ app.post('/reset', function (req, res) {
     })
 })
 
-app.listen(port, () => console.log(`Example app listening on port ${port}!`))
+// app.listen(port,'localhost', () => console.log(`Example app listening on port ${port}!`))
+app.listen(port,'107.10.114.154', () => console.log(`Example app listening on port ${port}!`))
