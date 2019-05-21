@@ -20,7 +20,8 @@ try {
     LISTS = {
         BASE: [...WORDS],
         UPDATED: [...WORDS],
-        RENDERED: null
+        RENDERED: null,
+        CHANGES: []
     }
 }
 
@@ -63,29 +64,34 @@ app.post('/update', function (req, res) {
 
     if (word && word !== ""){
         if (LISTS.RENDERED){
-            let rawUpdate = LISTS.UPDATED.map((item)=>item[0]);
-            let rawList = LISTS.BASE.map((item)=>item[0]);
-            let rawRendered = LISTS.RENDERED.map((item)=>item[0]);
+            if (LISTS.CHANGES.length < LISTS.RENDERED.length){
+                let rawUpdate = LISTS.UPDATED.map((item)=>item[0]);
+                let rawList = LISTS.BASE.map((item)=>item[0]);
+                let rawRendered = LISTS.RENDERED.map((item)=>item[0]);
 
-            if (!rawUpdate.includes(word) && !rawList.includes(word)){
-                let matchingWord = null;
-                let matchingStrictness = 0;
-                while(!matchingWord){
-                    matchingWord = rawUpdate.find((p) => rawList.includes(p) && rawRendered.includes(p) && Math.abs(p.length - word.length) <= matchingStrictness);
-                    if (!matchingWord){matchingStrictness++}
+                if (!rawUpdate.includes(word) && !rawList.includes(word)){
+                    let matchingWord = null;
+                    let matchingStrictness = 0;
+                    while(!matchingWord){
+                        matchingWord = rawUpdate.find((p) => rawList.includes(p) && rawRendered.includes(p) && Math.abs(p.length - word.length) <= matchingStrictness);
+                        if (!matchingWord){matchingStrictness++}
+                    }
+            
+                    let stringify = LISTS.UPDATED.join('<---delimiter--->').replace(matchingWord, word);
+                    LISTS.UPDATED = stringify.split("<---delimiter--->").map((item)=>item.split(','));
+                    LISTS.CHANGES.push(word);
+
+                    fs.writeFileSync('db/lists.json', JSON.stringify(LISTS));
+            
+                    res.send({
+                        baseList: LISTS.BASE,
+                        replaceList: LISTS.UPDATED
+                    })
+                } else {
+                    res.status(500).send({error: 'Word is already registered'})
                 }
-        
-                let stringify = LISTS.UPDATED.join('<---delimiter--->').replace(matchingWord, word);
-                LISTS.UPDATED = stringify.split("<---delimiter--->").map((item)=>item.split(','));
-
-                fs.writeFileSync('db/lists.json', JSON.stringify(LISTS));
-        
-                res.send({
-                    baseList: LISTS.BASE,
-                    replaceList: LISTS.UPDATED
-                })
             } else {
-                res.status(500).send({error: 'Word is already registered'})
+                res.status(500).send({error: 'Word registry is full'})
             }
         } else {
             res.status(500).send({error: 'Not yet initialized'})
@@ -98,6 +104,7 @@ app.post('/update', function (req, res) {
 app.post('/reset', function (req, res) {
     LISTS.RENDERED = null;
     LISTS.UPDATED = [...WORDS];
+    LISTS.CHANGES = [];
 
     fs.writeFileSync('db/lists.json', JSON.stringify(LISTS));
 
