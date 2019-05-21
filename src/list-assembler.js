@@ -4,7 +4,7 @@ module.exports = (words) => {
 
     nums.forEach((n) => {
         words.forEach((w, wi) => {
-            let resize = n - ((wi % 5)*0.25)
+            let resize = n - ((wi % 5)*0.2)
             rawList.push(resize + ' ' + w);
         });
     });
