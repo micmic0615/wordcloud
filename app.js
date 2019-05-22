@@ -3,21 +3,20 @@ const fs = require('fs');
 const listAssembler = require('./src/list-assembler.js')
 const express = require('express');
 const app = express();
-const bodyParser = require('body-parser');
+const bodyParser = require('body-parser'); 
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.urlencoded({ type: 'multipart/form-data' }));
 app.use(bodyParser.json({ type: 'application/json' }));
 
-
-var WORDS = listAssembler(require('./src/wordlist.js').filter((p,i) => (i % 2 === 0)));
-var LISTS;
+var WORDS = listAssembler(require('./src/wordlist.js').filter((p,i) => (i % 11 === 0)));
+var LISTS; 
 try {
     var dir = './db';
     if (!fs.existsSync(dir)){fs.mkdirSync(dir)}
     LISTS = JSON.parse(fs.readFileSync('db/lists.json'));
 } catch(e){
-    LISTS = {
+    LISTS = { 
         BASE: [...WORDS],
         UPDATED: [...WORDS],
         RENDERED: null,
@@ -61,8 +60,8 @@ app.post('/check-render', function (req, res) {
     })
 })
 
-app.post('/update', function (req, res) {
-    let { word } = req.body;
+app.post('/update', function (req, res) { 
+    let word = req.body.word.toUpperCase();
 
     if (word && word !== ""){
         if (LISTS.RENDERED){
@@ -79,7 +78,7 @@ app.post('/update', function (req, res) {
                         if (!matchingWord){matchingStrictness++}
                     }
             
-                    let stringify = LISTS.UPDATED.join('<---delimiter--->').replace(matchingWord, word);
+                    let stringify = LISTS.UPDATED.join('<---delimiter--->').split(matchingWord).join(word);
                     LISTS.UPDATED = stringify.split("<---delimiter--->").map((item)=>item.split(','));
                     LISTS.CHANGES.push(word);
 
