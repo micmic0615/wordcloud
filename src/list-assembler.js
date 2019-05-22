@@ -8,7 +8,7 @@ module.exports = (words) => {
             rawList.push(resize + ' ' + w);
         });  
     }); 
- 
+
     var stringList = rawList.join('\n').toUpperCase();
     var loopList = stringList.split('\n'); 
 
@@ -16,13 +16,13 @@ module.exports = (words) => {
     loopList.forEach((line, i) => {
         var lineArr = line.split(' ');
         var count = parseFloat(lineArr.shift()) || 0;
-        var canPush = ((count >= 5 && i % 6 === 0) || (count >= 4 && i % 3 === 0) || (count < 4))
+        var canPush = ((count >= 5 && i % 9 === 0) || (count >= 4 && i % 3 === 0) || (count < 4))
      
         if (canPush){
             wordcloudReturn.push([lineArr.join(' '), count]);
         }
-    }); 
- 
-    console.log(loopList.length, "/", wordcloudReturn.length) 
+    });
+
+    
     return wordcloudReturn
 }

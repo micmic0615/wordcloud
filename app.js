@@ -3,22 +3,31 @@ const fs = require('fs');
 const listAssembler = require('./src/list-assembler.js')
 const express = require('express');
 const app = express();
-const bodyParser = require('body-parser'); 
+const bodyParser = require('body-parser');
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.urlencoded({ type: 'multipart/form-data' }));
 app.use(bodyParser.json({ type: 'application/json' }));
 
-var WORDS = listAssembler(require('./src/wordlist.js').filter((p,i) => (i % 11 === 0)));
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+var WORDS = listAssembler(require('./src/wordlist.js').filter((p,i) => (i % 10 === 0)));
 var LISTS; 
 try {
     var dir = './db';
     if (!fs.existsSync(dir)){fs.mkdirSync(dir)}
     LISTS = JSON.parse(fs.readFileSync('db/lists.json'));
 } catch(e){
+    let shuffledList = [...WORDS];
+    shuffleArray(shuffledList)
     LISTS = { 
-        BASE: [...WORDS],
-        UPDATED: [...WORDS],
+        BASE: [...shuffledList],
+        UPDATED: [...shuffledList],
         RENDERED: null,
         CHANGES: []
     }
@@ -35,6 +44,12 @@ app.use(function(req, res, next) {
 // This may be what you are looking for:
 
 app.get('/form', function(req, res){
+    res.sendFile(__dirname + '/build/index.html');
+});
+app.get('/allchange', function(req, res){
+    res.sendFile(__dirname + '/build/index.html');
+});
+app.get('/oneword', function(req, res){
     res.sendFile(__dirname + '/build/index.html');
 });
 
@@ -62,6 +77,7 @@ app.post('/check-render', function (req, res) {
 
 app.post('/update', function (req, res) { 
     let word = req.body.word.toUpperCase();
+    let ratio = req.body.ratio || req.body.ratio === 0 ? req.body.ratio : 25;
 
     if (word && word !== ""){
         if (LISTS.RENDERED){
@@ -70,15 +86,47 @@ app.post('/update', function (req, res) {
                 let rawList = LISTS.BASE.map((item)=>item[0]);
                 let rawRendered = LISTS.RENDERED.map((item)=>item[0]);
 
+                let uniqueList = [];
+                rawRendered.forEach(e => {
+                    if (!uniqueList.includes(e)){
+                        uniqueList.push(e)
+                    }
+                });
+
                 if (!rawUpdate.includes(word) && !rawList.includes(word)){
+                    let matchingList = [];
                     let matchingWord = null;
                     let matchingStrictness = 0;
-                    while(!matchingWord){
-                        matchingWord = rawUpdate.find((p) => rawList.includes(p) && rawRendered.includes(p) && Math.abs(p.length - word.length) <= matchingStrictness);
-                        if (!matchingWord){matchingStrictness++}
+                    let matchRatio = Math.ceil(uniqueList.length*(ratio / 100));
+                    if (matchRatio < 1){matchRatio = 1}
+
+                    let currentMatches = 0;
+                    
+
+                    LISTS.UPDATED.forEach((p) => {if (LISTS.CHANGES.includes(p[0])){currentMatches++}})
+                    let currentRatio = Math.ceil(currentMatches*100 / LISTS.UPDATED.length);
+
+                    if (currentRatio + ratio < 100){
+                        while(matchingList.length < matchRatio){
+                            matchingWord = rawUpdate.find((p) => rawList.includes(p) && rawRendered.includes(p) && !matchingList.includes(p) && Math.abs(p.length - word.length) <= matchingStrictness);
+                            if (!matchingWord){
+                                matchingStrictness++;
+                            } else {
+                                matchingStrictness = 0;
+                                matchingList.push(matchingWord)
+                                matchingWord = null;
+                            }
+                        }
+                    } else {
+                        matchingList = rawUpdate.filter((p) => !LISTS.CHANGES.includes(p));
                     }
             
-                    let stringify = LISTS.UPDATED.join('<---delimiter--->').split(matchingWord).join(word);
+                    let stringify = LISTS.UPDATED.join('<---delimiter--->');
+                    matchingList.forEach((p) => {
+                        stringify = stringify.split(p).join(word)
+                    })
+                    
+
                     LISTS.UPDATED = stringify.split("<---delimiter--->").map((item)=>item.split(','));
                     LISTS.CHANGES.push(word);
 
@@ -115,5 +163,4 @@ app.post('/reset', function (req, res) {
     })
 })
 
-// app.listen(port,'localhost', () => console.log(`Example app listening on port ${port}!`))
 app.listen(port,'107.10.114.154', () => console.log(`Example app listening on port ${port}!`))
