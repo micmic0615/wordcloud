@@ -193,4 +193,4 @@ app.post('/reset', function (req, res) {
     })
 })
 
-app.listen(port,'107.10.114.154', () => console.log(`Example app listening on port ${port}!`))
+app.listen(port,'localhost', () => console.log(`Example app listening on port ${port}!`))
