@@ -2,7 +2,7 @@
   "name": "edm_tagger",
   "version": "0.0.0",
   "scripts": {
-    "start": "clear; nodemon --ignore 'db/lists.json' app.js"
+    "start": "nodemon --ignore 'db/lists.json' app.js"
   },
   "dependencies": {
     "body-parser": "^1.19.0",
