@@ -1,11 +1,15 @@
 module.exports = (words) => {
     var rawList = [];
-    var nums = [6, 5, 4, 3.5];    
+    var nums = [];
+    var max = 5.5;
+    while(max >= 3.8){
+        nums.push(max)
+        max -= 0.1
+    }
 
     nums.forEach((n) => {
-        words.forEach((w, wi) => {
-            let resize = n - ((wi % 5)*(0.04*n));
-            rawList.push(resize + ' ' + w);
+        words.forEach((w, wi) => { 
+            rawList.push(n + ' ' + w);
         });  
     }); 
 
@@ -17,10 +21,7 @@ module.exports = (words) => {
         var lineArr = line.split(' ');
         var count = parseFloat(lineArr.shift()) || 0;
         var canPush = ((count >= 5 && i % 9 === 0) || (count >= 4 && i % 3 === 0) || (count < 4))
-     
-        if (canPush){
-            wordcloudReturn.push([lineArr.join(' '), count]);
-        }
+        wordcloudReturn.push([lineArr.join(' '), count]);
     });
 
     
