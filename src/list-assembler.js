@@ -1,7 +1,7 @@
 module.exports = (words) => {
     var rawList = [];
     var nums = [];
-    var fontMaxSize = 4;
+    var fontMaxSize = 5;
 
 
     var decrement = 0.08 * (words.length/10)
