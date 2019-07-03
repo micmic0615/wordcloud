@@ -1,10 +1,14 @@
 module.exports = (words) => {
     var rawList = [];
     var nums = [];
-    var max = 5.5;
-    while(max >= 3.8){
-        nums.push(max)
-        max -= 0.1
+    var fontMaxSize = 4;
+
+
+    var decrement = 0.08 * (words.length/10)
+
+    while(fontMaxSize >= 3.5){
+        nums.push(fontMaxSize)
+        fontMaxSize -= decrement
     }
 
     nums.forEach((n) => {

@@ -14,13 +14,15 @@ function shuffleArray(array) {
         const j = Math.floor(Math.random() * (i + 1));
         [array[i], array[j]] = [array[j], array[i]];
     }
-} 
+}
 
 var words_negative = require('./src/list-negative.js');
 var words_positive = require('./src/list-positive.js');
 
 var WORDS_1 = listAssembler(words_negative);
 var WORDS_2 = listAssembler(words_positive);
+
+
 var DELAY = {timer: 0, interval: 250, value: 10000};
 var LISTS; 
 try {
@@ -192,5 +194,6 @@ app.post('/reset', function (req, res) {
         changes: LISTS.CHANGES,
     })
 })
-
-app.listen(port,'192.168.137.1', () => console.log(`Example app listening on port ${port}!`))
+// mac 107.10.114.154
+// windows 192.168.137.1
+app.listen(port,'107.10.114.154', () => console.log(`Example app listening on port ${port}!`))
