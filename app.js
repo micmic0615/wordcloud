@@ -5,6 +5,8 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 
+
+
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.urlencoded({ type: 'multipart/form-data' }));
 app.use(bodyParser.json({ type: 'application/json' }));
@@ -22,6 +24,15 @@ var words_positive = require('./src/list-positive.js');
 var WORDS_1 = listAssembler(words_negative);
 var WORDS_2 = listAssembler(words_positive);
 
+var PEOPLE = [];
+try {
+    var dir = './db';
+    if (!fs.existsSync(dir)){fs.mkdirSync(dir)}
+    PEOPLE = JSON.parse(fs.readFileSync('db/people.json'));
+} catch(e){
+    PEOPLE = [];
+    fs.writeFileSync('db/people.json', JSON.stringify(PEOPLE));
+}
 
 var DELAY = {timer: 0, interval: 250, value: 10000};
 var LISTS; 
@@ -57,6 +68,9 @@ app.get('/form', function(req, res){
     res.sendFile(__dirname + '/build/index.html');
 });
 app.get('/allchange', function(req, res){
+    res.sendFile(__dirname + '/build/index.html');
+});
+app.get('/pledge', function(req, res){
     res.sendFile(__dirname + '/build/index.html');
 });
 app.get('/oneword', function(req, res){
@@ -160,6 +174,9 @@ app.post('/update', function (req, res) {
 
     LISTS.QUEUE.push({word, ratio});
 
+    PEOPLE.push({name: word, length: word.length, timestamp: new Date().getTime()})
+    fs.writeFileSync('db/people.json', JSON.stringify(PEOPLE));
+
     res.send({
         baseList: LISTS.BASE,
         alterList: LISTS.REPLACE,
@@ -197,4 +214,4 @@ app.post('/reset', function (req, res) {
 // mac 107.10.114.154
 // windows 192.168.137.1
 // hotspot 192.168.137.1
-app.listen(port,'192.168.137.1', () => console.log(`Example app listening on port ${port}!`))
+app.listen(port,'localhost', () => console.log(`Example app listening on port ${port}!`))
