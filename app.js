@@ -5,8 +5,6 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 
-
-
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.urlencoded({ type: 'multipart/form-data' }));
 app.use(bodyParser.json({ type: 'application/json' }));
@@ -34,7 +32,7 @@ try {
     fs.writeFileSync('db/people.json', JSON.stringify(PEOPLE));
 }
 
-var DELAY = {timer: 0, interval: 250, value: 10000};
+var DELAY = {timer: 0, interval: 250, value: 20000, black_delay: 3250};
 var LISTS; 
 try {
     var dir = './db';
@@ -82,60 +80,86 @@ const crunchQueue = () => {
         DELAY.timer -= DELAY.interval 
     } else {
         if (LISTS.QUEUE.length){
-            let {word, ratio } = LISTS.QUEUE[0]; 
+            let {word, ratio, repeat } = LISTS.QUEUE[0]; 
             let did_run = false;
+            let is_color = false;
 
-            if (word && word !== "" && LISTS.RENDERED && LISTS.CHANGES.length < LISTS.RENDERED.length){
+            if ( LISTS.RENDERED && LISTS.CHANGES.length < LISTS.RENDERED.length){
                 did_run = true;
-                let rawUpdate = LISTS.REPLACE.map((item)=>item[0]);
-                shuffleArray(rawUpdate);
-                let rawList = LISTS.REPLACE.map((item)=>item[0]);
-                let rawRendered = LISTS.REPLACE.map((item)=>item[0]);
-          
-                let uniqueList = [];
-                rawRendered.forEach(e => {if (!uniqueList.includes(e)){uniqueList.push(e)}}); 
 
-                let matchingList = [];
-                let matchingWord = null;
-                let matchingStrictness = 0;
-                let matchingLimit = 0;
-                let matchQuota = Math.ceil(uniqueList.length*(ratio / 100));
-                if (matchQuota < 1){matchQuota = 1}
-
-                rawUpdate.forEach((p) => {if (p.length > matchingLimit){matchingLimit = p.length}})
-
-                while(matchingList.length < matchQuota && matchingStrictness < matchingLimit){
-                    matchingWord = rawUpdate.find((p) => rawList.includes(p) && !matchingList.includes(p) && Math.abs(p.length - word.length) <= matchingStrictness);
-
-                    if (!matchingWord){
-                        matchingStrictness++;
-                    } else {
-                        matchingStrictness = 0;
-                        matchingList.push(matchingWord)
-                        matchingWord = null;
-                    } 
+                if (word && word !== ""){
+                    is_color = true;
+                    
+                    let rawUpdate = LISTS.REPLACE.map((item)=>item[0]);
+                    shuffleArray(rawUpdate);
+                    let rawList = LISTS.REPLACE.map((item)=>item[0]);
+                    let rawRendered = LISTS.REPLACE.map((item)=>item[0]);
+              
+                    let uniqueList = [];
+                    rawRendered.forEach(e => {if (!uniqueList.includes(e)){uniqueList.push(e)}}); 
+    
+                    let matchingList = [];
+                    let matchingWord = null;
+                    let matchingStrictness = 0;
+                    let matchingLimit = 0;
+                    let matchQuota = Math.ceil(uniqueList.length*(ratio / 100));
+                    if (matchQuota < 1){matchQuota = 1}
+    
+                    rawUpdate.forEach((p) => {if (p.length > matchingLimit){matchingLimit = p.length}})
+    
+                    while(matchingList.length < matchQuota && matchingStrictness < matchingLimit){
+                        matchingWord = rawUpdate.find((p) => rawList.includes(p) && !matchingList.includes(p) && Math.abs(p.length - word.length) <= matchingStrictness);
+    
+                        if (!matchingWord){
+                            matchingStrictness++;
+                        } else {
+                            matchingStrictness = 0;
+                            matchingList.push(matchingWord)
+                            matchingWord = null;
+                        } 
+                    }
+    
+                    LISTS.UPDATED = LISTS.REPLACE.map((p) => {
+                        let item = [...p]
+                        if (matchingList.includes(item[0])){item[0] = word}
+                        return item;
+                    })
+                    
+                    LISTS.CHANGES = [];
+                    LISTS.CHANGES.push(word);
+    
+                    fs.writeFileSync('db/lists.json', JSON.stringify(LISTS));
+                } else if (word === null) {
+                    LISTS.UPDATED = [...LISTS.BASE]
+                    LISTS.CHANGES = [];
+                    fs.writeFileSync('db/lists.json', JSON.stringify(LISTS));
                 }
-
-                LISTS.UPDATED = LISTS.REPLACE.map((p) => {
-                    let item = [...p]
-                    if (matchingList.includes(item[0])){item[0] = word}
-                    return item;
-                })
-                
-                LISTS.CHANGES = [];
-                LISTS.CHANGES.push(word);
-
-                fs.writeFileSync('db/lists.json', JSON.stringify(LISTS));
-            } 
+            }
+           
 
             if (did_run){
                 LISTS.QUEUE.shift();
-                DELAY.timer = DELAY.value; 
+                
+                if (repeat){
+                    DELAY.timer = is_color ? DELAY.value*0.25 : DELAY.black_delay; 
+                } else {
+                    DELAY.timer = is_color ? DELAY.value : DELAY.black_delay; 
+                }
             } else {
                 DELAY.timer = DELAY.interval;
             }
            
-        } 
+        } else {
+            let repush = 1;
+            while(repush < 4){
+                repush++;
+                let last_person = PEOPLE[PEOPLE.length - repush];
+                if (last_person){
+                    LISTS.QUEUE.push({word: last_person.name, ratio:20, repeat: true});
+                    LISTS.QUEUE.push({word:null, ratio:0, repeat: true});
+                }
+            }
+        }
     }
 
     setTimeout(crunchQueue, DELAY.interval)
@@ -172,7 +196,10 @@ app.post('/update', function (req, res) {
     let word = req.body.word.toUpperCase();
     let ratio = req.body.ratio || req.body.ratio === 0 ? req.body.ratio : 25;
 
+    LISTS.QUEUE = LISTS.QUEUE.filter(p => (!p.repeat))
+
     LISTS.QUEUE.push({word, ratio});
+    LISTS.QUEUE.push({word:null, ratio:0});
 
     PEOPLE.push({name: word, length: word.length, timestamp: new Date().getTime()})
     fs.writeFileSync('db/people.json', JSON.stringify(PEOPLE));
@@ -211,7 +238,11 @@ app.post('/reset', function (req, res) {
         changes: LISTS.CHANGES,
     })
 })
+
 // mac 107.10.114.154
-// windows 192.168.137.1
+// windows 192.168.2.18
 // hotspot 192.168.137.1
-app.listen(port,'localhost', () => console.log(`Example app listening on port ${port}!`))
+app.listen(port,'192.168.137.1', () => console.log(`Example app listening on port ${port}!`))
+
+console.log("Running since " + new Date())
+

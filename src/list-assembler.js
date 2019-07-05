@@ -1,23 +1,25 @@
 module.exports = (words) => {
     var rawList = [];
     var nums = [];
-    var fontMaxSize = 7;
+    // var fontMaxSize = 7;
+    // var decrement = 0.1 * (words.length/3.5);
+    // while(fontMaxSize >= 4.5){
+    //     nums.push(fontMaxSize)
+    //     fontMaxSize -= decrement
+    // };
 
-
-    var decrement = 0.1 * (words.length/3.5)
-
-    while(fontMaxSize >= 4.5){
+    var fontMaxSize = 6;
+    var decrement = 0.1 * (words.length/8);
+    while(fontMaxSize >= 3.5){
         nums.push(fontMaxSize)
         fontMaxSize -= decrement
-    }
+    };
 
     nums.forEach((n) => {
         words.forEach((w, wi) => { 
             rawList.push(n + ' ' + w);
         });  
     }); 
-
-    console.log(nums.length * words.length)
 
     var stringList = rawList.join('\n').toUpperCase();
     var loopList = stringList.split('\n'); 
