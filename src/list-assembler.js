@@ -4,20 +4,20 @@ module.exports = (words) => {
     var fontMaxSize = 7;
 
 
-    var decrement = 0.1 * (words.length/10)
+    var decrement = 0.1 * (words.length/3.5)
 
     while(fontMaxSize >= 4.5){
         nums.push(fontMaxSize)
         fontMaxSize -= decrement
     }
 
-    console.log(nums)
-
     nums.forEach((n) => {
         words.forEach((w, wi) => { 
             rawList.push(n + ' ' + w);
         });  
     }); 
+
+    console.log(nums.length * words.length)
 
     var stringList = rawList.join('\n').toUpperCase();
     var loopList = stringList.split('\n'); 
