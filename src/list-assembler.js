@@ -2,11 +2,20 @@ module.exports = (words) => {
     var rawList = [];
     var nums = [];
     // var fontMaxSize = 7;
-    // var decrement = 0.1 * (words.length/3.5);
+    // var decrement = 0.1 * (words.length/5);
     // while(fontMaxSize >= 4.5){
     //     nums.push(fontMaxSize)
     //     fontMaxSize -= decrement
     // };
+
+    // var fontMaxSize = 6.4;
+    // var decrement = 0.1 * (words.length/6);
+    // while(fontMaxSize >= 4.5){
+    //     nums.push(fontMaxSize)
+    //     fontMaxSize -= decrement
+    // };
+
+    
 
     var fontMaxSize = 6;
     var decrement = 0.1 * (words.length/8);

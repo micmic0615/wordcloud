@@ -22,6 +22,8 @@ var words_positive = require('./src/list-positive.js');
 var WORDS_1 = listAssembler(words_negative);
 var WORDS_2 = listAssembler(words_positive);
 
+let REPEATING = false;
+
 var PEOPLE = [];
 try {
     var dir = './db';
@@ -32,28 +34,42 @@ try {
     fs.writeFileSync('db/people.json', JSON.stringify(PEOPLE));
 }
 
-var DELAY = {timer: 0, interval: 250, value: 20000, black_delay: 3250};
+var DELAY = {timer: 0, interval: 250, value: 45000, black_delay: 5000};
 var LISTS; 
-try {
-    var dir = './db';
-    if (!fs.existsSync(dir)){fs.mkdirSync(dir)}
-    LISTS = JSON.parse(fs.readFileSync('db/lists.json'));
-} catch(e){
-    let shuffledList_1 = [...WORDS_1];
-    shuffleArray(shuffledList_1);
-    let shuffledList_2 = [...WORDS_2];
-    shuffleArray(shuffledList_2)
+// try {
+//     var dir = './db';
+//     if (!fs.existsSync(dir)){fs.mkdirSync(dir)}
+//     LISTS = JSON.parse(fs.readFileSync('db/lists.json'));
+// } catch(e){
+//     let shuffledList_1 = [...WORDS_1];
+//     shuffleArray(shuffledList_1);
+//     let shuffledList_2 = [...WORDS_2];
+//     shuffleArray(shuffledList_2)
 
-    LISTS = { 
-        BASE: [...shuffledList_1],
-        REPLACE: [...shuffledList_2],
-        UPDATED: [...shuffledList_1],
-        RENDERED: null,
-        CHANGES: [],
-        QUEUE: [],
-    }
-    fs.writeFileSync('db/lists.json', JSON.stringify(LISTS));
+//     LISTS = { 
+//         BASE: [...shuffledList_1],
+//         REPLACE: [...shuffledList_2],
+//         UPDATED: [...shuffledList_1],
+//         RENDERED: null,
+//         CHANGES: [],
+//         QUEUE: [],
+//     }
+//     fs.writeFileSync('db/lists.json', JSON.stringify(LISTS));
+// }
+
+let shuffledList_1 = [...WORDS_1];
+shuffleArray(shuffledList_1);
+let shuffledList_2 = [...WORDS_2];
+shuffleArray(shuffledList_2)
+LISTS = { 
+    BASE: [...shuffledList_1],
+    REPLACE: [...shuffledList_2],
+    UPDATED: [...shuffledList_1],
+    RENDERED: null,
+    CHANGES: [],
+    QUEUE: [],
 }
+fs.writeFileSync('db/lists.json', JSON.stringify(LISTS));
 
 app.use(express.static('build'));
 app.use(function(req, res, next) {
@@ -89,6 +105,7 @@ const crunchQueue = () => {
 
                 if (word && word !== ""){
                     is_color = true;
+                    REPEATING = repeat;
                     
                     let rawUpdate = LISTS.REPLACE.map((item)=>item[0]);
                     shuffleArray(rawUpdate);
@@ -139,12 +156,7 @@ const crunchQueue = () => {
 
             if (did_run){
                 LISTS.QUEUE.shift();
-                
-                if (repeat){
-                    DELAY.timer = is_color ? DELAY.value*0.25 : DELAY.black_delay; 
-                } else {
-                    DELAY.timer = is_color ? DELAY.value : DELAY.black_delay; 
-                }
+                DELAY.timer = is_color ? DELAY.value : DELAY.black_delay; 
             } else {
                 DELAY.timer = DELAY.interval;
             }
@@ -196,8 +208,10 @@ app.post('/update', function (req, res) {
     let word = req.body.word.toUpperCase();
     let ratio = req.body.ratio || req.body.ratio === 0 ? req.body.ratio : 25;
 
-    LISTS.QUEUE = LISTS.QUEUE.filter(p => (!p.repeat))
+    LISTS.QUEUE = LISTS.QUEUE.filter(p => (!p.repeat));
+    if (REPEATING && DELAY.timer > 500){DELAY.timer = 500}
 
+    LISTS.QUEUE.push({word:null, ratio:0});
     LISTS.QUEUE.push({word, ratio});
     LISTS.QUEUE.push({word:null, ratio:0});
 
